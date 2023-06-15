@@ -9,5 +9,5 @@ PPU_ADDR    = $2006
 PPU_DATA    = $2007
 OAM_DMA     = $4014
 
-; CPU registers
+; internal CPU memory registers
 nmi_counter = $20

@@ -106,7 +106,7 @@ enable_background:
   lda #%00001000
   sta PPU_MASK
 
-title_scroll:
+scroll_title:
   jsr wait_nmi
   bit PPU_STATUS
   lda #$00
@@ -114,10 +114,41 @@ title_scroll:
   stx PPU_SCROLL
   inx
   cpx #$f0
-  bne title_scroll
+  bne scroll_title
 
-forever:
-  jmp forever
+wait_frames:
+  ldx #$10
+@wait:
+  jsr wait_nmi
+  dex
+  bne @wait
+
+flash_text:
+  ldx #$0f  ; start from last index of flash_colors
+@next:
+  ldy #$05  ; number of frames per color entry
+@wait:
+  jsr wait_nmi
+  dey
+  bne @wait
+  bit PPU_STATUS
+  lda #$3f
+  sta PPU_ADDR
+  lda #$0b
+  sta PPU_ADDR
+  lda flash_colors, x
+  sta PPU_DATA
+  lda #$00
+  sta PPU_ADDR
+  lda #$00
+  sta PPU_ADDR
+  lda #$00
+  sta PPU_SCROLL
+  lda #$ef
+  sta PPU_SCROLL
+  dex
+  bne @next
+  jmp flash_text
 
 nmi:
   inc nmi_counter
@@ -131,4 +162,5 @@ wait_nmi:
   rts
 
 .include "inc/palettes.s"
+.include "inc/flash_colors.s"
 .include "inc/title_screen.s"
