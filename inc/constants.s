@@ -11,3 +11,5 @@ OAM_DMA     = $4014
 
 ; internal CPU memory registers
 nmi_counter = $20
+scroll_x    = $21
+scroll_y    = $22

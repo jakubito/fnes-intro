@@ -1,4 +1,5 @@
 .include "inc/constants.s"
+.include "inc/macros.s"
 
 .segment "HEADER"
   .byte $4e, $45, $53, $1a  ; iNES header
@@ -54,11 +55,7 @@ vblank_wait2:
   bpl vblank_wait2
 
 load_palettes:
-  bit PPU_STATUS
-  lda #$3f
-  sta PPU_ADDR
-  lda #$00
-  sta PPU_ADDR
+  load_vram $3f00
   ldx #$00
 @loop:
   lda palettes, x
@@ -74,11 +71,7 @@ load_nametable:
   sta addr_lo
   lda #.hibyte(title_screen)
   sta addr_hi
-  bit PPU_STATUS
-  lda #$28
-  sta PPU_ADDR
-  lda #$00
-  sta PPU_ADDR
+  load_vram $2800
   ldx #$04
   ldy #$00
 @loop:
@@ -91,11 +84,9 @@ load_nametable:
   bne @loop
 
 initial_scroll:
-  bit PPU_STATUS
-  lda #$00
-  sta PPU_SCROLL
-  ldx #$20
-  stx PPU_SCROLL
+  lda #$30
+  sta scroll_y
+  update_scroll
 
 enable_nmi:
   lda #%10000000
@@ -108,45 +99,23 @@ enable_background:
 
 scroll_title:
   jsr wait_nmi
-  bit PPU_STATUS
-  lda #$00
-  sta PPU_SCROLL
-  stx PPU_SCROLL
-  inx
-  cpx #$f0
+  inc scroll_y
+  update_scroll
+  lda scroll_y
+  cmp #$ef
   bne scroll_title
-
-wait_frames:
-  ldx #$10
-@wait:
-  jsr wait_nmi
-  dex
-  bne @wait
+  wait_frames $10
 
 flash_text:
-  ldx #$0f  ; start from last index of flash_colors
+  ldy #$0f  ; start from last index of flash_colors
 @next:
-  ldy #$05  ; number of frames per color entry
-@wait:
-  jsr wait_nmi
-  dey
-  bne @wait
-  bit PPU_STATUS
-  lda #$3f
-  sta PPU_ADDR
-  lda #$0b
-  sta PPU_ADDR
-  lda flash_colors, x
+  wait_frames $05
+  load_vram $3f0b
+  lda flash_colors, y
   sta PPU_DATA
-  lda #$00
-  sta PPU_ADDR
-  lda #$00
-  sta PPU_ADDR
-  lda #$00
-  sta PPU_SCROLL
-  lda #$ef
-  sta PPU_SCROLL
-  dex
+  load_vram $00
+  update_scroll
+  dey
   bne @next
   jmp flash_text
 
@@ -156,9 +125,9 @@ nmi:
 
 wait_nmi:
   lda nmi_counter
-@loop:
+@wait:
   cmp nmi_counter
-  beq @loop
+  beq @wait
   rts
 
 .include "inc/palettes.s"
