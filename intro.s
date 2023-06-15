@@ -54,7 +54,7 @@ vblank_wait2:
   bpl vblank_wait2
 
 load_palettes:
-  lda PPU_STATUS
+  bit PPU_STATUS
   lda #$3f
   sta PPU_ADDR
   lda #$00
@@ -68,37 +68,67 @@ load_palettes:
   bne @loop
 
 load_nametable:
+  addr_lo = $00
+  addr_hi = $01
   lda #.lobyte(title_screen)
-  sta $00
+  sta addr_lo
   lda #.hibyte(title_screen)
-  sta $01
-  lda PPU_STATUS
-  lda #$20
+  sta addr_hi
+  bit PPU_STATUS
+  lda #$28
   sta PPU_ADDR
   lda #$00
   sta PPU_ADDR
   ldx #$04
   ldy #$00
 @loop:
-  lda ($00), y
+  lda (addr_lo), y
   sta PPU_DATA
   iny
   bne @loop
-  inc $01
+  inc addr_hi
   dex
   bne @loop
 
-enable_rendering:
-  lda #%10000000  ; enable NMI
+initial_scroll:
+  bit PPU_STATUS
+  lda #$00
+  sta PPU_SCROLL
+  ldx #$20
+  stx PPU_SCROLL
+
+enable_nmi:
+  lda #%10000000
   sta PPU_CTRL
-  lda #%00001000  ; enable background rendering
+
+enable_background:
+  jsr wait_nmi
+  lda #%00001000
   sta PPU_MASK
+
+title_scroll:
+  jsr wait_nmi
+  bit PPU_STATUS
+  lda #$00
+  sta PPU_SCROLL
+  stx PPU_SCROLL
+  inx
+  cpx #$f0
+  bne title_scroll
 
 forever:
   jmp forever
 
 nmi:
+  inc nmi_counter
   rti
+
+wait_nmi:
+  lda nmi_counter
+@loop:
+  cmp nmi_counter
+  beq @loop
+  rts
 
 .include "inc/palettes.s"
 .include "inc/title_screen.s"

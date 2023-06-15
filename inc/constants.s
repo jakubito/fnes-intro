@@ -8,3 +8,6 @@ PPU_SCROLL  = $2005
 PPU_ADDR    = $2006
 PPU_DATA    = $2007
 OAM_DMA     = $4014
+
+; CPU registers
+nmi_counter = $20
