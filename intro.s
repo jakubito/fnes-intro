@@ -123,12 +123,12 @@ scroll_title:
   UpdateScroll
   lda scroll_y
   cmp #239
-  bne :+
+  bne prepare_sprites
   lda #1
   sta state
   lda #10
   sta frame_delay
-: jmp prepare_sprites
+  jmp prepare_sprites
 
 flash_text:
   color_index = $02
