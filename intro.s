@@ -115,8 +115,7 @@ main_loop:
   lda #.hibyte(oam_data)
   sta OAM_DMA
   lda state
-  beq scroll_title
-  jmp flash_text
+  bne flash_text
 
 scroll_title:
   inc scroll_y
