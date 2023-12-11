@@ -63,13 +63,25 @@ vblank_wait2:
   bit PPU_STATUS
   bpl vblank_wait2
 
+clear_nametables:
+  LoadVram $2400
+  lda #0
+  tax
+  ldy #8
+: sta PPU_DATA
+  inx
+  bne :-
+  dey
+  bne :-
+
 load_palettes:
   LoadVram $3f00
   ldx #0
+  ldy #$20
 : lda palettes, x
   sta PPU_DATA
   inx
-  cpx #$20
+  dey
   bne :-
 
 load_nametable:
@@ -98,13 +110,14 @@ initial_sprites:
   bne :-
 
 initial_scroll:
-  lda #40
+  lda #20
   sta scroll_y
   UpdateScroll
 
 enable_rendering:
   lda #%10001000
   sta PPU_CTRL
+  jsr wait_nmi
   lda #%00011000
   sta PPU_MASK
 
